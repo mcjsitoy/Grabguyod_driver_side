@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1053188315252",
+    "firebase_url": "https://ride-hail-52f15.firebaseio.com",
+    "project_id": "ride-hail-52f15",
+    "storage_bucket": "ride-hail-52f15.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053188315252:android:81d2c5b286559130",
+        "android_client_info": {
+          "package_name": "com.example.grabguyod"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1053188315252-gar4r270qi4sa584fmqnqh9941r34u1a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlccw7mq-PM6ZoJqFan0ZGliFnQOS2KSY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1053188315252-gar4r270qi4sa584fmqnqh9941r34u1a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
