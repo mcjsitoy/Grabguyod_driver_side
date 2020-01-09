@@ -19,7 +19,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class riderlogin extends AppCompatActivity {
-
     private EditText memail, mpassword;
     public Button dlogin, dregister;
 
@@ -29,7 +28,7 @@ public class riderlogin extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_riderlogin);
+        setContentView(R.layout.activity_driverlogin);
 
         mauth = FirebaseAuth.getInstance();
 
@@ -41,7 +40,7 @@ public class riderlogin extends AppCompatActivity {
                     Intent intent = new Intent(riderlogin.this, map.class);
                     startActivity(intent);
                     finish();
-                    return;
+
                 }
 
             }
@@ -65,7 +64,7 @@ public class riderlogin extends AppCompatActivity {
                             Toast.makeText(riderlogin.this,"sign-up error", Toast.LENGTH_SHORT).show();
                         }else{
                             String user_id = mauth.getCurrentUser().getUid();
-                            DatabaseReference current_user_db = FirebaseDatabase.getInstance().getReference().child("users").child("riders").child(user_id);
+                            DatabaseReference current_user_db = FirebaseDatabase.getInstance().getReference().child("users").child("drivers").child(user_id);
                             current_user_db.setValue(true);
                         }
 
