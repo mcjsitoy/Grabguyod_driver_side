@@ -1,6 +1,5 @@
 package com.example.grabguyod;
 
-import android.annotation.SuppressLint;
 import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -167,7 +166,7 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
 
-    @SuppressWarnings({"Missing Permissions"})
+
     private void enableLocationComponent(@NonNull Style loadedMapStyle){
 
 
@@ -175,12 +174,9 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         if(PermissionsManager.areLocationPermissionsGranted(this)){
             LocationComponent locationComponent = mapbox.getLocationComponent();
 
-            LocationComponentActivationOptions locationComponentActivationOptions =
-                    LocationComponentActivationOptions.builder(this, loadedMapStyle)
-                            .useDefaultLocationEngine(false)
-                            .build();
+            locationComponent.activateLocationComponent(
+                    LocationComponentActivationOptions.builder(this, loadedMapStyle).build());
 
-            locationComponent.activateLocationComponent(locationComponentActivationOptions);
             locationComponent.setLocationComponentEnabled(true);
             locationComponent.setCameraMode(CameraMode.TRACKING);
             locationComponent.setRenderMode(RenderMode.COMPASS);
@@ -191,15 +187,14 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         }
 
     }
-    @SuppressLint("MissingPermission")
-    private void initLocationEngine(){
+    @SuppressWarnings("MissingPermission")
+    public void initLocationEngine(){
         locationengine = LocationEngineProvider.getBestLocationEngine(this);
 
         LocationEngineRequest request = new LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
                 .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
                 .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build();
         locationengine.requestLocationUpdates(request, callback, getMainLooper());
-        locationengine.getLastLocation(callback);
     }
 
     @Override

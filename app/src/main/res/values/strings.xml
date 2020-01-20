@@ -22,6 +22,7 @@
     <string name ="user_location_permission_explanation">Give permission please</string>
     <string name ="user_location_permission_not_granted">Permission not granted</string>
     <string name = "new_location">Latitude: 1%s Longitude: 2%s.</string>
+    <string name = "uniqueStyleUrl">mapbox://styles/mcjsitoy/ck08cyj3p125l1cp6x5dj7veq</string>
 
 
 </resources>
