@@ -12,6 +12,12 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.graphics.Color;
 import android.os.Bundle;
+
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
@@ -72,6 +78,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
     private final List<List<Point>> points = new ArrayList<>();
     private final List<Point> outerPoints = new ArrayList<>();
+    private FirebaseAuth mauth;
+    private FirebaseAuth.AuthStateListener firebaseauthlistener;
 
     private MapView mapView;
     private MapboxMap mapbox;
@@ -80,7 +88,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
     private long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
     private long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
     private mapLocationCallback callback = new mapLocationCallback(this);
-
+    private Location mLastLocation;
+    private Location locs;
 
 
 
@@ -98,6 +107,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
+        mauth = FirebaseAuth.getInstance();
+
 
 
 
@@ -119,7 +130,10 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                                 mapbox.setMinZoomPreference(10);
                                  showBoundsArea(style);
 
+
                                  showCrosshair();
+
+
 
 
 
@@ -186,6 +200,13 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
             permissionsManager.requestLocationPermissions(this);
         }
 
+
+           /*     onLocationChanged(Location locs){
+            mLastLocation = locs;
+
+
+        }*/
+
     }
     @SuppressWarnings("MissingPermission")
     public void initLocationEngine(){
@@ -217,6 +238,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                    public void onStyleLoaded(@NonNull Style style) {
                        enableLocationComponent(style);
                    }
+
+
                });
            } else {
                Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
@@ -235,28 +258,27 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
            public void onSuccess(LocationEngineResult result) {
                map activity = activityWeakReference.get();
 
-               if (activity != null) {
+               if(activity != null){
                    Location location = result.getLastLocation();
-
-                   if (location == null) {
+                   if(location == null){
                        return;
                    }
-                   // Create a Toast which displays the new location's coordinates
-                   Toast.makeText(activity, String.format(activity.getString(R.string.new_location),
+                   Toast.makeText(activity,String.format(activity.getString(R.string.new_location),
                            String.valueOf(result.getLastLocation().getLatitude()),
                            String.valueOf(result.getLastLocation().getLongitude())),
                            Toast.LENGTH_SHORT).show();
 
-                   // Pass the new location to the Maps SDK's LocationComponent
-                   if (activity.mapbox != null && result.getLastLocation() != null) {
+
+                   if(activity.mapbox != null && result.getLastLocation() != null){
                        activity.mapbox.getLocationComponent().forceLocationUpdate(result.getLastLocation());
                    }
                }
+
+
+
            }
 
-           public void onFailure(
-                   @NonNull
-                           Exception exception) {
+           public void onFailure(@NonNull Exception exception) {
                Log.d("LocationChangeActivity", exception.getLocalizedMessage());
                map activity = activityWeakReference.get();
                if (activity != null) {
@@ -264,7 +286,29 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                            Toast.LENGTH_SHORT).show();
                }
            }
+
+
+          /* public void onLocationResult(LocationEngineResult locationEngineResult){
+               for(Location location : locationEngineResult.getLocations()){
+               }
+           }*/
        }
+
+       public void onLocationChanged(@NonNull Location location){
+
+        mLastLocation = location;
+
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
+
+           GeoFire geoFire = new GeoFire(ref);
+           geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+        }
+
+
+
 
 
 
@@ -292,6 +336,12 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
     protected void onStop() {
         super.onStop();
         mapView.onStop();
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.removeLocation(userId);
     }
 
     @Override
