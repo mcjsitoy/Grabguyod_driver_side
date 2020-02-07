@@ -15,6 +15,9 @@ import android.os.Bundle;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.LocationCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -110,6 +113,10 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         mauth = FirebaseAuth.getInstance();
 
 
+                    //temporary//
+
+
+                    //temporary dont know where to put this//
 
 
     }
@@ -132,6 +139,7 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
                                  showCrosshair();
+                                 initLocationEngine();
 
 
 
@@ -216,6 +224,7 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                 .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
                 .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build();
         locationengine.requestLocationUpdates(request, callback, getMainLooper());
+        locationengine.getLastLocation(callback);
     }
 
     @Override
@@ -241,6 +250,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
                });
+
+
            } else {
                Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
                finish();
@@ -258,21 +269,39 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
            public void onSuccess(LocationEngineResult result) {
                map activity = activityWeakReference.get();
 
-               if(activity != null){
+               if (activity != null) {
                    Location location = result.getLastLocation();
-                   if(location == null){
+                   if (location == null) {
                        return;
                    }
-                   Toast.makeText(activity,String.format(activity.getString(R.string.new_location),
+                   Toast.makeText(activity, String.format(activity.getString(R.string.new_location),
                            String.valueOf(result.getLastLocation().getLatitude()),
                            String.valueOf(result.getLastLocation().getLongitude())),
                            Toast.LENGTH_SHORT).show();
 
 
-                   if(activity.mapbox != null && result.getLastLocation() != null){
-                       activity.mapbox.getLocationComponent().forceLocationUpdate(result.getLastLocation());
-                   }
-               }
+
+
+
+                       }
+
+
+
+                       if (activity.mapbox != null && result.getLastLocation() != null){
+
+                           Location location = result.getLastLocation();
+                           activity.mapbox.getLocationComponent().forceLocationUpdate(result.getLastLocation());
+
+                           LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                           String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                           DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
+
+                           GeoFire geoFire = new GeoFire(ref);
+                           geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                       }
+
+
+
 
 
 
@@ -296,9 +325,9 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
        public void onLocationChanged(@NonNull Location location){
 
-        mLastLocation = location;
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
@@ -312,10 +341,12 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
 
-
+    @SuppressWarnings("MissingPermmisions")
     @Override
     protected void onStart() {
         super.onStart();
+
+
         mapView.onStart();
     }
 
@@ -335,13 +366,32 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
     @Override
     protected void onStop() {
         super.onStop();
+
+
+
+
+        if(locationengine != null){
+            locationengine.removeLocationUpdates(callback);
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
+
+            GeoFire geoFire = new GeoFire(ref);
+            geoFire.removeLocation(userId);
+
+        }
+
+
+
+
+
+
+
+
         mapView.onStop();
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
 
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.removeLocation(userId);
+
+
     }
 
     @Override
@@ -361,7 +411,13 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         super.onDestroy();
         if(locationengine != null){
             locationengine.removeLocationUpdates(callback);
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
+
+            GeoFire geoFire = new GeoFire(ref);
+            geoFire.removeLocation(userId);
         }
+
         mapView.onDestroy();
 
 
