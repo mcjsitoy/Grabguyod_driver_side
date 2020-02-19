@@ -23,6 +23,12 @@
     <string name ="user_location_permission_not_granted">Permission not granted</string>
     <string name = "new_location">Latitude: 1%s Longitude: 2%s.</string>
     <string name = "uniqueStyleUrl">mapbox://styles/mcjsitoy/ck08cyj3p125l1cp6x5dj7veq</string>
+    <string name = "fragment_in_card_below"> MAP</string>
+    <string name = "requestbuttontext"> Hail a Ride </string>
+    <string name = "riderloc"> Latitude: %s Longitude: %s.</string>
+    <string name = "yesdrivers"> driverofund</string>
+    <string name = "ridelocation"> Lat: 1%s Long: 2%s.</string>
+
 
 
 </resources>

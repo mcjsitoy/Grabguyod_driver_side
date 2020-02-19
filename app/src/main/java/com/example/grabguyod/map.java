@@ -1,8 +1,11 @@
 package com.example.grabguyod;
 
+import android.content.Intent;
 import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.Button;
@@ -15,18 +18,26 @@ import android.os.Bundle;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.firebase.geofire.LocationCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.location.LocationEngineRequest;
 import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.location.LocationEngineCallback;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 import com.mapbox.android.core.permissions.PermissionsListener;
@@ -51,8 +62,12 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+
 
 
 
@@ -67,11 +82,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
 
 
-public class map extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener{
+public class map extends FragmentActivity implements OnMapReadyCallback, PermissionsListener{
     private static final LatLng BOUND_CORNER_NW = new LatLng(7.165823, 125.646832);
     private static final LatLng BOUND_CORNER_SE = new LatLng(7.161096, 125.657170);
     private static final LatLngBounds RESTRICTED_BOUNDS_AREA = new LatLngBounds.Builder()
@@ -93,10 +109,21 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
     private mapLocationCallback callback = new mapLocationCallback(this);
     private Location mLastLocation;
     private Location locs;
+    public  Button dmlogout;
+    private FirebaseAuth user;
+    private  int circlerad = 2;
+    private boolean driverfound = false;
+     final List <String> keyNamelist = new ArrayList<String>();
+    final List <Double>  latlist = new ArrayList<Double>();
+    final List <Double>  lnglist = new ArrayList<Double>();
+    private static final String ICON_ID = "ICON_ID";
+    private static final String LAYER_ID = "LAYER_ID";
+    private SymbolManager symbolManager;
+    private Symbol symbol;
+    private static final String AIRPORT_ICON_HARBOR = "airport-15";
 
-
-
-
+    private int nor;
+    private LatLng ridercoord;
 
 
 
@@ -112,17 +139,58 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         mapView.getMapAsync(this);
         mauth = FirebaseAuth.getInstance();
 
+        //LOGOUT ??? //
 
-                    //temporary//
+       /* dmlogout = (Button) findViewById(R.id.logout);
+        dmlogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                if(user != null){
+                    Intent intent = new Intent(map.this, Main3Activity.class);
+                    startActivity(intent);
+                    finish();
+                    return;
+                }
 
 
-                    //temporary dont know where to put this//
+            }
+        });
+*/
+
+
+
+
+
+
 
 
     }
             @Override
             public void onMapReady(@NonNull final MapboxMap mapbox) {
                 this.mapbox = mapbox;
+
+                final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                findViewById(R.id.floatingActionButton).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                            if(user != null) {
+                                onDestroy();
+                                Intent intent = new Intent(map.this, Main3Activity.class);
+                                startActivity(intent);
+                                FirebaseAuth.getInstance().signOut();
+                                finish();
+
+
+                            }
+                    }
+                });
+
+
+
+
 
 
 
@@ -131,15 +199,27 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                         new Style.OnStyleLoaded() {
                             @Override
                             public void onStyleLoaded(@NonNull Style style) {
-                                enableLocationComponent(style);
-                                mapbox.setLatLngBoundsForCameraTarget(RESTRICTED_BOUNDS_AREA);
 
+
+                                enableLocationComponent(style);
+
+                                mapbox.setLatLngBoundsForCameraTarget(RESTRICTED_BOUNDS_AREA);
                                 mapbox.setMinZoomPreference(10);
                                  showBoundsArea(style);
-
-
                                  showCrosshair();
-                                 initLocationEngine();
+                                initLocationEngine();
+                                getriders(style);
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -189,6 +269,9 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
 
+
+
+
     private void enableLocationComponent(@NonNull Style loadedMapStyle){
 
 
@@ -209,11 +292,6 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
         }
 
 
-           /*     onLocationChanged(Location locs){
-            mLastLocation = locs;
-
-
-        }*/
 
     }
     @SuppressWarnings("MissingPermission")
@@ -267,6 +345,7 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
            }
 
            public void onSuccess(LocationEngineResult result) {
+
                map activity = activityWeakReference.get();
 
                if (activity != null) {
@@ -274,10 +353,10 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                    if (location == null) {
                        return;
                    }
-                   Toast.makeText(activity, String.format(activity.getString(R.string.new_location),
+                  /* Toast.makeText(activity, String.format(activity.getString(R.string.new_location),
                            String.valueOf(result.getLastLocation().getLatitude()),
                            String.valueOf(result.getLastLocation().getLongitude())),
-                           Toast.LENGTH_SHORT).show();
+                           Toast.LENGTH_SHORT).show();*/
 
 
 
@@ -288,7 +367,6 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
                        if (activity.mapbox != null && result.getLastLocation() != null){
-
                            Location location = result.getLastLocation();
                            activity.mapbox.getLocationComponent().forceLocationUpdate(result.getLastLocation());
 
@@ -296,8 +374,13 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
                            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
 
-                           GeoFire geoFire = new GeoFire(ref);
-                           geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                            GeoFire geoFire = new GeoFire(ref);
+                            geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+
+
+
+
+
                        }
 
 
@@ -317,24 +400,8 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
            }
 
 
-          /* public void onLocationResult(LocationEngineResult locationEngineResult){
-               for(Location location : locationEngineResult.getLocations()){
-               }
-           }*/
        }
 
-       public void onLocationChanged(@NonNull Location location){
-
-
-
-
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driveravailable");
-
-           GeoFire geoFire = new GeoFire(ref);
-           geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
-        }
 
 
 
@@ -377,6 +444,7 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
             GeoFire geoFire = new GeoFire(ref);
             geoFire.removeLocation(userId);
+
 
         }
 
@@ -425,8 +493,98 @@ public class map extends AppCompatActivity implements OnMapReadyCallback, Permis
 
 
 
+    private void getriders(final Style style){
+        DatabaseReference drivloc = FirebaseDatabase.getInstance().getReference("CustomerRequest");
+        drivloc.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+
+                int size = (int) dataSnapshot.getChildrenCount();
+
+
+
+             /*  keyNamelist.clear();
+                latlist.clear();
+                lnglist.clear();*/
+
+
+               for (DataSnapshot areaSnapshot : dataSnapshot.getChildren()) {
+                    String keyName = areaSnapshot.getKey();
+                   keyNamelist.add(keyName);
+                     Double lat = areaSnapshot.child("l").child("0").getValue(Double.class);
+                    latlist.add(lat);
+                     Double lng = areaSnapshot.child("l").child("1").getValue(Double.class);
+                    lnglist.add(lng);
+
+
+
+                   symbolManager = new SymbolManager(mapView, mapbox, style);
+                   symbolManager.setIconAllowOverlap(true);
+                   symbolManager.setTextAllowOverlap(true);
+                   symbol = symbolManager.create(new SymbolOptions()
+                           .withLatLng(new LatLng(lat, lng))
+                           .withIconImage(AIRPORT_ICON_HARBOR)
+                           .withIconSize(2.0f)
+                           .withDraggable(true));
+
+
+
+
+
+             }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+
+
+
+
+
+    }
+
+    /*public void addmarker(@NonNull Style style){
+            getriders();
+        symbolManager = new SymbolManager(mapView, mapbox, style);
+        symbolManager.setIconAllowOverlap(true);
+        symbolManager.setTextAllowOverlap(true);
+        symbol = symbolManager.create(new SymbolOptions()
+                .withLatLng(new LatLng(latlist.size(), lnglist.size()))
+                .withIconImage(AIRPORT_ICON_HARBOR)
+                .withIconSize(2.0f)
+                .withDraggable(true));
+
+
+    }*/
+
+
+
+
+
+
+
 
 
 
 
 }
+

@@ -3,6 +3,7 @@
 
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
 
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -12,27 +13,32 @@
 
 
     <com.mapbox.mapboxsdk.maps.MapView
-        android:id = "@+id/mapView"
+        android:id="@+id/rmapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         mapbox:mapbox_cameraTargetLat="7.163179"
         mapbox:mapbox_cameraTargetLng="125.652081"
-        mapbox:mapbox_cameraZoom = "14.7" >
+        mapbox:mapbox_cameraZoom="14.7"
+        tools:layout_editor_absoluteX="-31dp"
+        tools:layout_editor_absoluteY="-208dp">
+
 
     </com.mapbox.mapboxsdk.maps.MapView>
 
+    <Button
+        android:id="@+id/request"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/requestbuttontext"
+        mapbox:layout_constraintBottom_toBottomOf="@+id/rmapView" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
+        android:id="@+id/logout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:srcCompat="@drawable/ic_launcher_foreground"
         mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="@+id/mapView" />
-
-
-
-
-
+        mapbox:layout_constraintTop_toTopOf="@+id/rmapView" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

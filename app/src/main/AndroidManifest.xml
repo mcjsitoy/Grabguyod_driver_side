@@ -31,6 +31,7 @@
         <activity android:name=".Main2Activity" />
         <activity android:name=".fbase" />
         <activity android:name=".MainActivity"></activity>
+        <activity android:name=".ridermap"></activity>
     </application>
 
 </manifest>

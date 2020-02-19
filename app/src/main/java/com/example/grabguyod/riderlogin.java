@@ -20,7 +20,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class riderlogin extends AppCompatActivity {
     private EditText memail, mpassword;
-    public Button dlogin, dregister;
+    public Button rlogin, rregister, rrequest;
 
     private FirebaseAuth mauth;
     private FirebaseAuth.AuthStateListener firebaseauthlistener;
@@ -28,7 +28,7 @@ public class riderlogin extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driverlogin);
+        setContentView(R.layout.activity_riderlogin);
 
         mauth = FirebaseAuth.getInstance();
 
@@ -37,7 +37,7 @@ public class riderlogin extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if(user!=null){
-                    Intent intent = new Intent(riderlogin.this, map.class);
+                    Intent intent = new Intent(riderlogin.this, ridermap.class);
                     startActivity(intent);
                     finish();
 
@@ -49,10 +49,10 @@ public class riderlogin extends AppCompatActivity {
         memail = (EditText) findViewById(R.id.email);
         mpassword = (EditText) findViewById(R.id.password);
 
-        dlogin = (Button) findViewById(R.id.drlogin);
-        dregister = (Button) findViewById(R.id.drregister);
+        rlogin = (Button) findViewById(R.id.rlogin);
+        rregister = (Button) findViewById(R.id.rregister);
 
-        dregister.setOnClickListener(new View.OnClickListener() {
+        rregister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 final String email = memail.getText().toString();
@@ -72,7 +72,7 @@ public class riderlogin extends AppCompatActivity {
                 });
             }
         });
-        dlogin.setOnClickListener(new View.OnClickListener() {
+        rlogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 final String email = memail.getText().toString();
